@@ -1,9 +1,7 @@
 // Deps
 import React from "react";
 // Components
-import { useSelector, useDispatch } from "react-redux";
 import Logo from "../../00-Components/Logo/Logo";
-import HorMultiSelect from "../../00-Components/HorMultiSelect/HorMultiSelect";
 import TestTable from "../../08-Containers/TableTest";
 // Hooks
 // Actions
@@ -44,37 +42,15 @@ const donutMock = {
 };
 
 const MainPage = (): JSX.Element => {
-  const count = useSelector(getCountfromStore);
-  const dispatch = useDispatch();
   return (
     <div>
       <div className="hor-capsule">
         <Logo size="40" className="hor-logo" />
         <h1>
-          Hor Project Boostrap V<sub>2</sub>
+          Hor Table V<sub>2</sub>
         </h1>
-        <h2>Sub-Title</h2>
-        <h3>Header</h3>
-        <h4>Sub-Header</h4>
-        <p>
-          Hello this Website is a bootstrap for future projects to be created,
-          this text is just a test to see how text behaves with its styles
-          arranged
-        </p>
-        <form className="hor-form">
-          <HorMultiSelect label="Desired Food" list={mockList} />
-          <button
-            className="rounded"
-            type="submit"
-            onClick={(e) => {
-              e.preventDefault();
-            }}
-          >
-            send
-          </button>
-        </form>
+        <TestTable />
       </div>
-      <TestTable />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // Deps
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 // Components
 import HorDropDown from "./HorDropdown/HorDropdown";
 import Icon from "../IconComponent/Icon";
@@ -25,15 +25,23 @@ const listFormatter = (list: ListItemInterface[]) =>
 const HorMultiSelect = ({
   label,
   list,
+  onSelect,
 }: {
   label: string;
   list: ListItemInterface[];
+  onSelect: (list: ListItemInterface[]) => void;
 }): JSX.Element => {
   const dropdownRef = useRef(null);
 
   const [selectedItems, setSelectedItems] = useState(listFormatter(list));
   const [isActive, setIsActive] = useDetectOutsideClick(dropdownRef, false);
-  const handleClick = () => setIsActive(!isActive);
+  const handleClick = () => {
+    if (isActive === true) {
+      setIsActive(false);
+    } else {
+      setIsActive(true);
+    }
+  };
   const handleSelect = (listed: ListItemInterface): void => {
     if (listed.selected === false) {
       const deselected = selectedItems.map((item) =>
@@ -51,6 +59,12 @@ const HorMultiSelect = ({
   };
 
   const currentlySelected = selectedItems.filter((item) => item.selected);
+
+  useEffect(() => {
+    if (isActive === false) {
+      onSelect(currentlySelected);
+    }
+  }, [selectedItems, isActive]);
 
   return (
     <StyledHorMultiSelect

@@ -32,11 +32,6 @@ const TableHeader: FC<Props> = ({ headerGroup, table }) => {
                     desc: " 🔽",
                   }[header.column.getIsSorted() as string] ?? null}
                 </div>
-                {header.column.getCanFilter() ? (
-                  <div>
-                    <Filter column={header.column} table={table} />
-                  </div>
-                ) : null}
               </>
             )}
           </th>

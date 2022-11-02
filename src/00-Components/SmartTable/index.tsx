@@ -26,6 +26,8 @@ import {
   compareItems,
 } from "@tanstack/match-sorter-utils";
 import TablePagination from "./TablePagination";
+import TableHeader from "./TableHeader";
+import DebouncedInput from "./TableDebounceInput";
 
 declare module "@tanstack/table-core" {
   interface FilterFns {
@@ -49,30 +51,12 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
-const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
-  let dir = 0;
-
-  // Only sort by rank if the column has ranking information
-  if (rowA.columnFiltersMeta[columnId]) {
-    dir = compareItems(
-      rowA.columnFiltersMeta[columnId]?.itemRank!,
-      rowB.columnFiltersMeta[columnId]?.itemRank!
-    );
-  }
-
-  // Provide an alphanumeric fallback for when the item ranks are equal
-  return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
-};
-
 interface Props {
   data: any[];
   columns: ColumnDef<any>[];
 }
 
 const SmartTable: FC<Props> = ({ columns, data }) => {
-  console.log("data", { data, columns });
-  const rerender = React.useReducer(() => ({}), {})[1];
-
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
@@ -116,52 +100,11 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
 
   return (
     <div className="p-2">
-      <div>
-        <DebouncedInput
-          value={globalFilter ?? ""}
-          onChange={(value) => setGlobalFilter(String(value))}
-          className="p-2 font-lg shadow border border-block"
-          placeholder="Search all columns..."
-        />
-      </div>
       <div className="h-2" />
       <table>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <th key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder ? null : (
-                      <>
-                        <div
-                          {...{
-                            className: header.column.getCanSort()
-                              ? "cursor-pointer select-none"
-                              : "",
-                            onClick: header.column.getToggleSortingHandler(),
-                          }}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {{
-                            asc: " 🔼",
-                            desc: " 🔽",
-                          }[header.column.getIsSorted() as string] ?? null}
-                        </div>
-                        {header.column.getCanFilter() ? (
-                          <div>
-                            <Filter column={header.column} table={table} />
-                          </div>
-                        ) : null}
-                      </>
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
+            <TableHeader headerGroup={headerGroup} table={table} />
           ))}
         </thead>
         <tbody>
@@ -186,123 +129,9 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
       <div className="h-2" />
       <TablePagination table={table} />
       <div>{table.getPrePaginationRowModel().rows.length} Rows</div>
-      <div>
-        <button onClick={() => rerender()}>Force Rerender</button>
-      </div>
       <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
     </div>
   );
 };
-
-function Filter({
-  column,
-  table,
-}: {
-  column: Column<any, unknown>;
-  table: Table<any>;
-}) {
-  const firstValue = table
-    .getPreFilteredRowModel()
-    .flatRows[0]?.getValue(column.id);
-
-  const columnFilterValue = column.getFilterValue();
-
-  const sortedUniqueValues = React.useMemo(
-    () =>
-      typeof firstValue === "number"
-        ? []
-        : Array.from(column.getFacetedUniqueValues().keys()).sort(),
-    [column.getFacetedUniqueValues()]
-  );
-
-  return typeof firstValue === "number" ? (
-    <div>
-      <div className="flex space-x-2">
-        <DebouncedInput
-          type="number"
-          min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-          max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-          value={(columnFilterValue as [number, number])?.[0] ?? ""}
-          onChange={(value) =>
-            column.setFilterValue((old: [number, number]) => [value, old?.[1]])
-          }
-          placeholder={`Min ${
-            column.getFacetedMinMaxValues()?.[0]
-              ? `(${column.getFacetedMinMaxValues()?.[0]})`
-              : ""
-          }`}
-          className="w-24 border shadow rounded"
-        />
-        <DebouncedInput
-          type="number"
-          min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-          max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-          value={(columnFilterValue as [number, number])?.[1] ?? ""}
-          onChange={(value) =>
-            column.setFilterValue((old: [number, number]) => [old?.[0], value])
-          }
-          placeholder={`Max ${
-            column.getFacetedMinMaxValues()?.[1]
-              ? `(${column.getFacetedMinMaxValues()?.[1]})`
-              : ""
-          }`}
-          className="w-24 border shadow rounded"
-        />
-      </div>
-      <div className="h-1" />
-    </div>
-  ) : (
-    <>
-      <datalist id={column.id + "list"}>
-        {sortedUniqueValues.slice(0, 5000).map((value: any) => (
-          <option value={value} key={value} />
-        ))}
-      </datalist>
-      <DebouncedInput
-        type="text"
-        value={(columnFilterValue ?? "") as string}
-        onChange={(value) => column.setFilterValue(value)}
-        placeholder={`Search... (${column.getFacetedUniqueValues().size})`}
-        className="w-36 border shadow rounded"
-        list={column.id + "list"}
-      />
-      <div className="h-1" />
-    </>
-  );
-}
-
-// A debounced input react component
-function DebouncedInput({
-  value: initialValue,
-  onChange,
-  debounce = 500,
-  ...props
-}: {
-  value: string | number;
-  onChange: (value: string | number) => void;
-  debounce?: number;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange">) {
-  const [value, setValue] = React.useState(initialValue);
-
-  React.useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  React.useEffect(() => {
-    const timeout = setTimeout(() => {
-      onChange(value);
-    }, debounce);
-
-    return () => clearTimeout(timeout);
-  }, [value]);
-
-  return (
-    <input
-      {...props}
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-    />
-  );
-}
 
 export default SmartTable;
