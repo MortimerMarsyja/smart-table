@@ -90,6 +90,14 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
     debugColumns: false,
   });
 
+  const getTableValues = () => {
+    return table
+      .getRowModel()
+      .rows.map((row) => row.getAllCells().map((cell) => cell));
+  };
+
+  console.log("table", getTableValues());
+
   React.useEffect(() => {
     if (table.getState().columnFilters[0]?.id === "fullName") {
       if (table.getState().sorting[0]?.id !== "fullName") {
@@ -103,8 +111,8 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
       <div className="h-2" />
       <table>
         <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableHeader headerGroup={headerGroup} table={table} />
+          {table.getHeaderGroups().map((headerGroup, idx) => (
+            <TableHeader key={idx} headerGroup={headerGroup} table={table} />
           ))}
         </thead>
         <tbody>
@@ -129,7 +137,6 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
       <div className="h-2" />
       <TablePagination table={table} />
       <div>{table.getPrePaginationRowModel().rows.length} Rows</div>
-      <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import SmartTable from "../../00-Components/SmartTable";
 import HorMultiSelect from "../../00-Components/HorMultiSelect/HorMultiSelect";
 import { ListItemInterface } from "../../00-Components/HorMultiSelect/MultiselectInterfaces";
 import { CSVLink } from "react-csv";
+import flatten from "lodash/flatten";
 
 declare module "@tanstack/table-core" {
   interface FilterFns {
@@ -58,20 +59,24 @@ const TestTable: FC = () => {
       footer: (props: any) => props.column.id,
     },
     {
-      accessorFn: (row: any) => row.fullName,
+      accessorKey: "fullName",
       id: "Full Name",
       cell: (info: any) => info.getValue(),
       header: () => <span>Full Name</span>,
       footer: (props: any) => props.column.id,
     },
     {
-      accessorFn: (row: any) => row.email,
+      accessorKey: "email",
       id: "Email",
       cell: (info: any) => info.getValue(),
       header: () => <span>Email</span>,
       footer: (props: any) => props.column.id,
     },
   ];
+
+  const headers = columns.map((column) => {
+    return column.accessorKey;
+  });
 
   const getData = async () => {
     const response = await fetch(
@@ -104,21 +109,29 @@ const TestTable: FC = () => {
 
   return (
     <>
-      {data && data.length > 0 && <CSVLink data={data}>Download me</CSVLink>}
+      {data && data.length > 0 && (
+        <CSVLink
+          data={data.map((item: any) =>
+            Object.assign({}, ...headers.map((key) => ({ [key]: item[key] })))
+          )}
+        >
+          Download me
+        </CSVLink>
+      )}
       {data && data.length > 0 && (
         <button onClick={() => setAddFilter(true)}>Add Filter</button>
       )}
       {selectedFilters && selectedFilters.length > 0 && (
         <form>
           {selectedFilters.map((filter) => (
-            <>
-              <label>{filter.label}</label>
+            <label key={filter.label}>
+              {filter.label}
               <input name={filter.label} />
-            </>
+            </label>
           ))}
           <button
             type="submit"
-            onSubmit={(formValues) => console.log(formValues)}
+            onSubmit={(formValues) => console.log(formValues, "test")}
           >
             Submit
           </button>
