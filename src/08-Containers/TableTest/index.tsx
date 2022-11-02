@@ -2,9 +2,9 @@ import React, { FC, useEffect, useState } from "react";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import { FilterFn } from "@tanstack/table-core";
 import SmartTable from "../../00-Components/SmartTable";
-import React from "react";
 import HorMultiSelect from "../../00-Components/HorMultiSelect/HorMultiSelect";
 import { ListItemInterface } from "../../00-Components/HorMultiSelect/MultiselectInterfaces";
+import { CSVLink } from "react-csv";
 
 declare module "@tanstack/table-core" {
   interface FilterFns {
@@ -104,6 +104,7 @@ const TestTable: FC = () => {
 
   return (
     <>
+      {data && data.length > 0 && <CSVLink data={data}>Download me</CSVLink>}
       {data && data.length > 0 && (
         <button onClick={() => setAddFilter(true)}>Add Filter</button>
       )}
