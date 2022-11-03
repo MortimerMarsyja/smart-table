@@ -5,7 +5,6 @@ import SmartTable from "../../00-Components/SmartTable";
 import HorMultiSelect from "../../00-Components/HorMultiSelect/HorMultiSelect";
 import { ListItemInterface } from "../../00-Components/HorMultiSelect/MultiselectInterfaces";
 import { CSVLink } from "react-csv";
-import flatten from "lodash/flatten";
 
 declare module "@tanstack/table-core" {
   interface FilterFns {
@@ -57,6 +56,7 @@ const TestTable: FC = () => {
       id: "Id",
       cell: (info: any) => info.getValue(),
       footer: (props: any) => props.column.id,
+      type: "input",
     },
     {
       accessorKey: "fullName",
@@ -64,6 +64,7 @@ const TestTable: FC = () => {
       cell: (info: any) => info.getValue(),
       header: () => <span>Full Name</span>,
       footer: (props: any) => props.column.id,
+      type: "min-max",
     },
     {
       accessorKey: "email",
@@ -71,6 +72,7 @@ const TestTable: FC = () => {
       cell: (info: any) => info.getValue(),
       header: () => <span>Email</span>,
       footer: (props: any) => props.column.id,
+      type: "input",
     },
   ];
 
@@ -86,67 +88,11 @@ const TestTable: FC = () => {
     setData(data);
   };
 
-  const getFilterItemsFromColumns = () => {
-    return columns.map((column) => ({
-      value: column.id,
-      label: column.id,
-      type: "string",
-    }));
-  };
-
-  const handleSelectFilters = (
-    selectedFilters: ListItemInterface[] | undefined
-  ) => {
-    if (selectedFilters && selectedFilters.length > 0) {
-      setSelectedFilters(selectedFilters);
-      setAddFilter(false);
-    }
-  };
-
   useEffect(() => {
     getData();
   }, []);
 
-  return (
-    <>
-      {data && data.length > 0 && (
-        <CSVLink
-          data={data.map((item: any) =>
-            Object.assign({}, ...headers.map((key) => ({ [key]: item[key] })))
-          )}
-        >
-          Download me
-        </CSVLink>
-      )}
-      {data && data.length > 0 && (
-        <button onClick={() => setAddFilter(true)}>Add Filter</button>
-      )}
-      {selectedFilters && selectedFilters.length > 0 && (
-        <form>
-          {selectedFilters.map((filter) => (
-            <label key={filter.label}>
-              {filter.label}
-              <input name={filter.label} />
-            </label>
-          ))}
-          <button
-            type="submit"
-            onSubmit={(formValues) => console.log(formValues, "test")}
-          >
-            Submit
-          </button>
-        </form>
-      )}
-      {addFilter && (
-        <HorMultiSelect
-          label="Filter by"
-          list={getFilterItemsFromColumns()}
-          onSelect={(items) => handleSelectFilters(items)}
-        />
-      )}
-      {data && <SmartTable columns={columns} data={data} />}
-    </>
-  );
+  return <>{data && <SmartTable columns={columns} data={data} />}</>;
 };
 
 export default TestTable;
