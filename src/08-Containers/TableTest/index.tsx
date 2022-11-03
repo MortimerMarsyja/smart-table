@@ -45,10 +45,6 @@ interface MyColumn {
 
 const TestTable: FC = () => {
   const [data, setData] = useState<MyColumn[]>();
-  const [addFilter, setAddFilter] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState<
-    ListItemInterface[] | undefined
-  >();
 
   const columns = [
     {
@@ -76,10 +72,6 @@ const TestTable: FC = () => {
     },
   ];
 
-  const headers = columns.map((column) => {
-    return column.accessorKey;
-  });
-
   const getData = async () => {
     const response = await fetch(
       "https://assets.sesamy.dev/testdata/faketransactions.json"
@@ -92,7 +84,13 @@ const TestTable: FC = () => {
     getData();
   }, []);
 
-  return <>{data && <SmartTable columns={columns} data={data} />}</>;
+  return (
+    <>
+      {data && (
+        <SmartTable columns={columns} data={data} updateData={setData} />
+      )}
+    </>
+  );
 };
 
 export default TestTable;

@@ -27,10 +27,8 @@ import {
 } from "@tanstack/match-sorter-utils";
 import TablePagination from "./TablePagination";
 import TableHeader from "./TableHeader";
-import DebouncedInput from "./TableDebounceInput";
 import { CSVLink } from "react-csv";
-import { ListItemInterface } from "../HorMultiSelect/MultiselectInterfaces";
-import HorMultiSelect from "../HorMultiSelect/HorMultiSelect";
+import TableFilteringComponent from "./TableFilteringComponent";
 
 declare module "@tanstack/table-core" {
   interface FilterFns {
@@ -57,22 +55,15 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 interface Props {
   data: any[];
   columns: ColumnDef<any>[];
+  updateData: (data: any[]) => void;
 }
 
-const SmartTable: FC<Props> = ({ columns, data }) => {
+const SmartTable: FC<Props> = ({ columns, data, updateData }) => {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
 
-  const headers = columns.map((column) => {
-    return column.accessorKey;
-  });
-
   const [globalFilter, setGlobalFilter] = React.useState("");
-  const [addFilter, setAddFilter] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState<
-    ListItemInterface[] | undefined
-  >();
 
   const gCols = React.useMemo<ColumnDef<any, any>[]>(() => [...columns], []);
 
@@ -101,22 +92,6 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
     debugColumns: false,
   });
 
-  const getTableValues = () => {
-    return table
-      .getRowModel()
-      .rows.map((row) => row.getAllCells().map((cell) => cell));
-  };
-
-  function handleSubmit(e: any) {
-    e.preventDefault();
-    const filterValues = selectedFilters?.map((item: any) => ({
-      value: e.target[item.label].value,
-      label: item.label,
-      type: item.type,
-    }));
-    console.log(filterValues);
-  }
-
   useEffect(() => {
     if (table.getState().columnFilters[0]?.id === "fullName") {
       if (table.getState().sorting[0]?.id !== "fullName") {
@@ -125,56 +100,27 @@ const SmartTable: FC<Props> = ({ columns, data }) => {
     }
   }, [table.getState().columnFilters[0]?.id]);
 
-  const getFilterItemsFromColumns = () => {
-    return columns.map((column) => ({
-      value: column.id,
-      label: column.id,
-      type: column.type,
-    }));
-  };
-
-  const handleSelectFilters = (
-    selectedFilters: ListItemInterface[] | undefined
-  ) => {
-    if (selectedFilters && selectedFilters.length > 0) {
-      setSelectedFilters(selectedFilters);
-      setAddFilter(false);
-    }
-  };
+  const headers = columns.map((column) => {
+    return column.accessorKey;
+  });
 
   return (
     <div className="p-2">
       {data && data.length > 0 && (
-        <CSVLink
-          data={data.map((item: any) =>
-            Object.assign({}, ...headers.map((key) => ({ [key]: item[key] })))
-          )}
-        >
-          Download me
-        </CSVLink>
-      )}
-      {data && data.length > 0 && (
-        <button onClick={() => setAddFilter(true)}>Add Filter</button>
-      )}
-      {selectedFilters && selectedFilters.length > 0 && (
-        <form id="test" onSubmit={handleSubmit}>
-          {selectedFilters.map((filter) => (
-            <label key={filter.label}>
-              {filter.label}
-              <input name={filter.label} />
-            </label>
-          ))}
-          <button type="submit" form="test">
-            Submit
-          </button>
-        </form>
-      )}
-      {addFilter && (
-        <HorMultiSelect
-          label="Filter by"
-          list={getFilterItemsFromColumns()}
-          onSelect={(items) => handleSelectFilters(items)}
-        />
+        <>
+          <CSVLink
+            data={data.map((item: any) =>
+              Object.assign({}, ...headers.map((key) => ({ [key]: item[key] })))
+            )}
+          >
+            Download me
+          </CSVLink>
+          <TableFilteringComponent
+            data={data}
+            columns={columns}
+            updateData={updateData}
+          />
+        </>
       )}
       <div className="h-2" />
       <table>
